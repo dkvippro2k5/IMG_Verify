@@ -1,0 +1,555 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Golden Review</title>
+<style>
+:root {
+  --bg: #f6f6f4; --panel: #ffffff; --text: #1d1d1b; --muted: #6b6b66; --line: #e2e2dd;
+  --accent: #2f5bd3; --ok: #1f8a4c; --ok-bg: #e5f4ea; --bad: #c4372f; --bad-bg: #fbe7e5;
+  --warn: #9a6400; --warn-bg: #fff3d6; --focus: #2f5bd3;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161615; --panel: #20201e; --text: #ecece8; --muted: #a0a09a; --line: #34342f;
+    --accent: #7c9cff; --ok: #5cc98a; --ok-bg: #173323; --bad: #f07a70; --bad-bg: #3a1d1a;
+    --warn: #f0bf5a; --warn-bg: #362a10; --focus: #7c9cff;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161615; --panel: #20201e; --text: #ecece8; --muted: #a0a09a; --line: #34342f;
+  --accent: #7c9cff; --ok: #5cc98a; --ok-bg: #173323; --bad: #f07a70; --bad-bg: #3a1d1a;
+  --warn: #f0bf5a; --warn-bg: #362a10; --focus: #7c9cff;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+button, input, select, textarea { font: inherit; color: inherit; }
+.app { display: grid; grid-template-columns: 260px 1fr; min-height: 100vh; }
+aside { border-right: 1px solid var(--line); background: var(--panel); padding: 14px; position: sticky; top: 0; height: 100vh; overflow: auto; }
+aside h1 { font-size: 16px; margin: 0 0 10px; }
+.labeler { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
+.labeler input { padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
+.ent-list { list-style: none; padding: 0; margin: 0 0 12px; }
+.ent-list li { padding: 7px 8px; border-radius: 6px; cursor: pointer; display: flex; justify-content: space-between; gap: 6px; }
+.ent-list li:hover { background: var(--bg); }
+.ent-list li.active { background: var(--accent); color: #fff; }
+.ent-list li.batch-head { cursor: default; font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; padding: 10px 8px 4px; }
+.ent-list li.batch-head:hover { background: none; }
+.ent-list .prog { font-variant-numeric: tabular-nums; opacity: .8; white-space: nowrap; }
+.side-actions { display: flex; flex-direction: column; gap: 6px; }
+.btn { border: 1px solid var(--line); background: var(--panel); padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.btn.ok.on { background: var(--ok); border-color: var(--ok); color: #fff; }
+.btn.bad.on { background: var(--bad); border-color: var(--bad); color: #fff; }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.small { font-size: 12px; color: var(--muted); }
+main { padding: 16px 20px 80px; min-width: 0; }
+.ent-head { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; margin-bottom: 14px; }
+.ent-head h2 { margin: 0 0 4px; font-size: 20px; }
+.ent-head .meta { color: var(--muted); }
+.ent-head .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+.tip { margin-top: 8px; padding: 8px 10px; border-radius: 8px; background: var(--warn-bg); color: var(--warn); }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; }
+.card { background: var(--panel); border: 2px solid var(--line); border-radius: 10px; overflow: hidden; display: flex; flex-direction: column; }
+.card.focus { border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 25%, transparent); }
+.card.approved { background: var(--ok-bg); }
+.card.suggest:not(.approved):not(.rejected) { border-style: dashed; border-color: var(--ok); }
+.card.rejected { background: var(--bad-bg); }
+.thumb { height: 260px; background: #0002; display: flex; align-items: center; justify-content: center; cursor: zoom-in; }
+.thumb img { max-width: 100%; max-height: 100%; object-fit: contain; display: block; }
+.body { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.desc { font-weight: 500; }
+mark { background: color-mix(in srgb, var(--ok) 30%, transparent); color: inherit; border-radius: 3px; padding: 0 2px; }
+mark.var { background: color-mix(in srgb, var(--bad) 35%, transparent); }
+.facts { color: var(--muted); font-size: 12px; display: flex; flex-wrap: wrap; gap: 4px 10px; }
+.facts a { color: var(--accent); }
+.badges { display: flex; flex-wrap: wrap; gap: 4px; }
+.badge { font-size: 12px; padding: 1px 7px; border-radius: 999px; background: var(--warn-bg); color: var(--warn); }
+.badge.bad { background: var(--bad-bg); color: var(--bad); }
+.badge.mut { background: var(--bg); color: var(--muted); }
+.decide { display: flex; gap: 6px; }
+.decide .btn { flex: 1; }
+.ident { display: flex; gap: 4px; align-items: center; flex-wrap: wrap; }
+.ident .btn { padding: 3px 8px; font-size: 12px; }
+.ident .btn.on { background: var(--text); color: var(--panel); border-color: var(--text); }
+.reasons { display: flex; flex-wrap: wrap; gap: 4px; }
+.chip { font-size: 12px; padding: 3px 8px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); cursor: pointer; }
+.chip.on { background: var(--bad); border-color: var(--bad); color: #fff; }
+.chip:disabled { opacity: .35; cursor: not-allowed; }
+.note { width: 100%; padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); }
+.warn-line { color: var(--bad); font-size: 12px; min-height: 1em; }
+.overlay { position: fixed; inset: 0; background: #000c; display: none; align-items: center; justify-content: center; z-index: 10; padding: 20px; }
+.overlay.open { display: flex; }
+.overlay img { max-width: 100%; max-height: 82vh; object-fit: contain; }
+.overlay .cap { color: #eee; margin-top: 10px; text-align: center; max-width: 900px; }
+.overlay .cap a { color: #9db4ff; }
+.modal { background: var(--panel); color: var(--text); border-radius: 10px; padding: 18px 20px; max-width: 720px; max-height: 85vh; overflow: auto; }
+.modal h3 { margin-top: 0; }
+.modal table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.modal td { border-top: 1px solid var(--line); padding: 4px 6px; vertical-align: top; }
+kbd { border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; font-size: 12px; background: var(--bg); }
+.toast { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); background: var(--text); color: var(--panel); padding: 8px 14px; border-radius: 8px; display: none; z-index: 20; }
+@media (max-width: 760px) {
+  .app { grid-template-columns: 1fr; }
+  aside { position: static; height: auto; border-right: 0; border-bottom: 1px solid var(--line); }
+  main { padding: 12px 16px 60px; }
+  .grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside>
+    <h1>Golden Review</h1>
+    <div class="labeler">
+      <label class="small" for="labeler">Người gán nhãn</label>
+      <input id="labeler" placeholder="Tên của bạn" autocomplete="off">
+    </div>
+    <ul class="ent-list" id="entList"></ul>
+    <div class="small" id="totalProg" style="margin-bottom:10px"></div>
+    <div class="side-actions">
+      <button class="btn primary" id="exportBtn">Xuất CSV</button>
+      <button class="btn" id="importBtn">Nhập CSV (tiếp tục / gộp)</button>
+      <input type="file" id="importFile" accept=".csv,text/csv" hidden>
+      <button class="btn" id="guideBtn">Hướng dẫn &amp; phím tắt</button>
+      <button class="btn" id="themeBtn">Đổi giao diện sáng/tối</button>
+    </div>
+    <p class="small">Nhãn tự lưu trong trình duyệt này. Nhớ <b>Xuất CSV</b> khi xong để nộp kết quả.</p>
+  </aside>
+  <main>
+    <div class="ent-head" id="entHead"></div>
+    <div class="grid" id="grid"></div>
+  </main>
+</div>
+
+<div class="overlay" id="zoom"><div style="display:flex;flex-direction:column;align-items:center;max-width:100%">
+  <img id="zoomImg" alt=""><div class="cap" id="zoomCap"></div></div></div>
+
+<div class="overlay" id="guide"><div class="modal" id="guideBody"></div></div>
+<div class="toast" id="toast"></div>
+
+<script src="data.js"></script>
+<script>
+(function () {
+  "use strict";
+  const DATA = window.GOLDEN_DATA || [];
+  const CONFIG = window.REVIEW_CONFIG || {};
+  const STORE_KEY = CONFIG.storeKey || "golden-review-v1";
+
+  const REASONS = [
+    ["wrong_person", "Sai người / không chắc"],
+    ["name_mismatch", "Tiêu đề nói người khác"],
+    ["no_person", "Không có người / ảnh lỗi"],
+    ["sensitive", "Nhạy cảm"],
+    ["not_clear", "Không rõ"],
+    ["too_small", "Quá bé"],
+    ["not_prominent", "Không nổi bật"],
+    ["hard_to_identify", "Khó nhận diện"],
+  ];
+  const IDENT = [["match", "Đúng người"], ["other", "Người khác"], ["unsure", "Không chắc"]];
+
+  // ---------- state ----------
+  let state = { labeler: "", labels: {}, unresolved: {}, current: null, focus: 0, showAuto: false };
+  try {
+    const raw = localStorage.getItem(STORE_KEY);
+    if (raw) state = Object.assign(state, JSON.parse(raw));
+  } catch (e) { /* bộ nhớ trình duyệt không dùng được: vẫn chạy, chỉ không tự lưu */ }
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  const entities = [];
+  const byEntity = {};
+  DATA.forEach(r => {
+    if (!byEntity[r.slug]) { byEntity[r.slug] = []; entities.push(r.slug); }
+    byEntity[r.slug].push(r);
+  });
+  if (!state.current || !byEntity[state.current]) state.current = entities[0];
+
+  // ---------- helpers ----------
+  const $ = id => document.getElementById(id);
+  function esc(s) { return String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
+  function strip(s) { return s.normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/đ/g, "d").replace(/Đ/g, "D").toLowerCase(); }
+  function clean(tok) { return tok.replace(/^[^\p{L}\p{N}&]+|[^\p{L}\p{N}&]+$/gu, ""); }
+  function toast(msg) { const t = $("toast"); t.textContent = msg; t.style.display = "block"; clearTimeout(toast._t); toast._t = setTimeout(() => t.style.display = "none", 2200); }
+
+  // So tên trong tiêu đề: khớp đúng dấu (xanh) / cùng chữ nhưng khác dấu (đỏ).
+  function nameCheck(desc, name) {
+    const words = desc.normalize("NFC").split(/(\s+)/);
+    const nameToks = name.normalize("NFC").split(/\s+/).map(clean).filter(Boolean);
+    const n = nameToks.length;
+    const nameExact = nameToks.join(" ").toLowerCase();
+    const nameStrip = strip(nameExact);
+    const tokIdx = [];
+    words.forEach((w, i) => { if (!/^\s+$/.test(w) && w !== "") tokIdx.push(i); });
+    const marks = {};
+    let exact = 0, variant = 0;
+    for (let k = 0; k + n <= tokIdx.length; k++) {
+      const win = tokIdx.slice(k, k + n).map(i => clean(words[i])).join(" ");
+      if (!win) continue;
+      if (strip(win) === nameStrip) {
+        // Tiêu đề viết không dấu ("WEAN LE") hoặc tên gốc không dấu ("Tho Nguyen") không tính là xung đột;
+        // chỉ báo khác dấu khi cả hai đều có dấu và dấu khác nhau ("Phượng" vs "Phương").
+        const winLow = win.toLowerCase();
+        const isExact = winLow === nameExact || strip(winLow) === winLow || nameStrip === nameExact;
+        if (isExact) exact++; else variant++;
+        for (let j = k; j < k + n; j++) marks[tokIdx[j]] = isExact ? "ok" : "var";
+      }
+    }
+    const html = words.map((w, i) => marks[i] ? `<mark class="${marks[i] === "var" ? "var" : ""}">${esc(w)}</mark>` : esc(w)).join("");
+    return { html, exact, variant };
+  }
+
+  function getLabel(r) { return state.labels[r.line_no] || {}; }
+  // Ảnh bị pipeline tự loại và không thuộc mẫu kiểm tra: tính là xong, ẩn mặc định.
+  function isAuto(r) { return r.auto_flag === "rejected" && !Number(r.audit); }
+  function isSuggest(r) { return r.auto_flag === "suggest_approved"; }
+  function rank(r) { return isAuto(r) ? 3 : r.gold_flag ? 2 : isSuggest(r) ? 1 : 0; }
+  function visRows(slug) {
+    const rows = state.showAuto ? byEntity[slug] : byEntity[slug].filter(r => !isAuto(r));
+    return rows.slice().sort((a, b) => rank(a) - rank(b) || a.line_no - b.line_no);
+  }
+  function source(r) {
+    if (state.unresolved[r.slug]) return "human";
+    if (getLabel(r).flag) return Number(r.audit) ? "audit" : "human";
+    if (r.gold_flag) return "gold";
+    return isAuto(r) ? "auto" : "";
+  }
+  function effective(r) {
+    if (state.unresolved[r.slug]) return { flag: "rejected", reasons: ["unresolved"], identity: "unsure", note: (getLabel(r).note || "") };
+    const l = getLabel(r);
+    if (!l.flag && r.gold_flag) return { flag: r.gold_flag, reasons: (r.gold_reasons || "").split(";").filter(Boolean), identity: r.gold_identity || "", note: "" };
+    if (!l.flag && isAuto(r)) return { flag: "rejected", reasons: (r.auto_reasons || "").split(";").filter(Boolean), identity: "", note: "" };
+    return l;
+  }
+  function problems(r) {
+    const l = effective(r);
+    if (!l.flag) return "chưa gán nhãn";
+    if (l.flag === "rejected" && !(l.reasons || []).length) return "rejected nhưng thiếu lý do";
+    if (l.flag === "approved" && l.identity !== "match") return "approved nhưng chưa xác nhận đúng người";
+    return "";
+  }
+
+  function setLabel(r, patch) {
+    const l = Object.assign({ reasons: [] }, getLabel(r), patch, { ts: new Date().toISOString() });
+    // Rule cứng: không đúng người hoặc không chắc → rejected, có wrong_person.
+    if (l.identity === "other" || l.identity === "unsure") {
+      l.flag = "rejected";
+      if (!l.reasons.includes("wrong_person")) l.reasons = l.reasons.concat("wrong_person");
+    }
+    if (l.flag === "approved") l.reasons = [];
+    state.labels[r.line_no] = l;
+    save();
+  }
+
+  // ---------- actions ----------
+  function approve(r) {
+    if (state.unresolved[r.slug]) return toast("Entity đang đánh dấu không xác định được người đúng");
+    const l = getLabel(r);
+    if (l.identity === "other" || l.identity === "unsure") return toast("Không thể approved: chưa xác nhận đúng người");
+    setLabel(r, { flag: "approved", identity: "match" });
+  }
+  function reject(r) {
+    if (state.unresolved[r.slug]) return;
+    setLabel(r, { flag: "rejected" });
+  }
+  function toggleReason(r, code) {
+    if (state.unresolved[r.slug]) return;
+    const l = getLabel(r);
+    let reasons = (l.reasons || []).slice();
+    if (code === "wrong_person" && (l.identity === "other" || l.identity === "unsure") && reasons.includes(code)) {
+      return toast("Đã chọn Người khác / Không chắc nên bắt buộc có lý do này");
+    }
+    reasons = reasons.includes(code) ? reasons.filter(x => x !== code) : reasons.concat(code);
+    setLabel(r, { reasons, flag: reasons.length ? "rejected" : l.flag });
+  }
+  function setIdentity(r, id) {
+    if (state.unresolved[r.slug]) return;
+    const l = getLabel(r);
+    const patch = { identity: id };
+    if (id === "match" && l.flag === "rejected") {
+      patch.reasons = (l.reasons || []).filter(x => x !== "wrong_person");
+    }
+    setLabel(r, patch);
+  }
+
+  // ---------- render ----------
+  function renderSide() {
+    $("labeler").value = state.labeler || "";
+    let done = 0;
+    let lastBatch = null;
+    $("entList").innerHTML = entities.map(slug => {
+      const rows = byEntity[slug];
+      const d = rows.filter(r => !problems(r)).length;
+      done += d;
+      const name = rows[0].canonical_name;
+      const batch = rows[0].batch || "";
+      const head = batch !== lastBatch ? `<li class="batch-head">${esc(batch)}</li>` : "";
+      lastBatch = batch;
+      const mark = d === rows.length ? "✓ " : "";
+      return `${head}<li data-slug="${esc(slug)}" class="${slug === state.current ? "active" : ""}"><span>${mark}${esc(name)}</span><span class="prog">${d}/${rows.length}</span></li>`;
+    }).join("");
+    $("totalProg").textContent = `Đã xong ${done}/${DATA.length} ảnh`;
+  }
+
+  function renderHead() {
+    const rows = byEntity[state.current];
+    const r0 = rows[0];
+    const cnt = { approved: 0, rejected: 0 };
+    rows.forEach(r => { const f = effective(r).flag; if (f) cnt[f]++; });
+    const unres = !!state.unresolved[state.current];
+    const nAuto = rows.filter(isAuto).length;
+    const nSug = rows.filter(r => isSuggest(r) && !getLabel(r).flag && !r.gold_flag && !state.unresolved[r.slug]).length;
+    $("entHead").innerHTML = `
+      <h2>${esc(r0.canonical_name)}</h2>
+      <div class="meta">${esc(r0.category)} · <code>${esc(r0.slug)}</code> · query: ${esc(r0.query)} · ${rows.length} ảnh · dòng ${rows[0].line_no}–${rows[rows.length - 1].line_no}</div>
+      <div class="row">
+        <span class="badge mut">approved ${cnt.approved}</span>
+        <span class="badge bad">rejected ${cnt.rejected}</span>
+        <button class="btn ${unres ? "bad on" : ""}" id="unresBtn">${unres ? "Đang loại cả entity (unresolved) — bấm để bỏ" : "Không xác định được người đúng → loại cả entity"}</button>
+        <button class="btn" id="rejectRest">Rejected các ảnh chưa gán (chọn lý do sau)</button>
+        ${nSug ? `<button class="btn ok" id="sugBtn">Xác nhận ${nSug} gợi ý approved</button>` : ""}
+        ${nAuto ? `<button class="btn" id="autoBtn">${state.showAuto ? "Ẩn" : "Hiện"} ${nAuto} ảnh đã tự loại</button>` : ""}
+      </div>
+      <div class="tip">Bước 1: xem hết ảnh và tiêu đề để xác định <b>đúng người</b>. Không chắc ảnh nào là đúng người → <b>Không chắc</b> (tự động rejected). Tên <mark>xanh</mark> = khớp đúng dấu, <mark class="var">đỏ</mark> = cùng chữ nhưng khác dấu, cần kiểm tra.</div>`;
+    if ($("sugBtn")) $("sugBtn").onclick = () => {
+      byEntity[state.current].forEach(r => { if (isSuggest(r) && !getLabel(r).flag && !r.gold_flag) setLabel(r, { flag: "approved", identity: "match" }); });
+      render();
+    };
+    if ($("autoBtn")) $("autoBtn").onclick = () => { state.showAuto = !state.showAuto; state.focus = 0; save(); render(); };
+    $("unresBtn").onclick = () => {
+      if (state.unresolved[state.current]) delete state.unresolved[state.current];
+      else state.unresolved[state.current] = true;
+      save(); render();
+    };
+    $("rejectRest").onclick = () => {
+      byEntity[state.current].forEach(r => { if (!getLabel(r).flag && !isAuto(r)) setLabel(r, { flag: "rejected" }); });
+      render();
+    };
+  }
+
+  function card(r, idx) {
+    const l = effective(r);
+    const unres = !!state.unresolved[r.slug];
+    const nc = nameCheck(r.description || "", r.canonical_name);
+    const badges = [];
+    if (nc.variant) badges.push(`<span class="badge bad">tên khác dấu trong tiêu đề</span>`);
+    if (!nc.exact && !nc.variant) badges.push(`<span class="badge mut">tiêu đề không nhắc tên</span>`);
+    if (r.download_error) badges.push(`<span class="badge bad">tải lỗi</span>`);
+    if (r.auto_flag === "rejected") badges.push(`<span class="badge bad">tự loại: ${esc(r.rules)}</span>`);
+    if (r.gold_flag) badges.push(`<span class="badge mut">golden: ${esc(r.gold_flag)}</span>`);
+    if (isSuggest(r)) badges.push(`<span class="badge" style="background:var(--ok-bg);color:var(--ok)">gợi ý approved</span>`);
+    if (Number(r.audit)) badges.push(`<span class="badge">mẫu kiểm tra: xác nhận lại</span>`);
+    const WARN = { mentor_ambiguous: "mentor: ambiguous", multi_face: "nhiều mặt", small_face: "mặt nhỏ",
+      no_good_face: "không thấy mặt rõ", entity_no_anchor: "entity chưa có ảnh mốc", no_image: "không đọc được ảnh" };
+    (r.warnings || "").split(";").filter(w => WARN[w]).forEach(w => badges.push(`<span class="badge">${WARN[w]}</span>`));
+    if (r.best_sim !== undefined && r.best_sim !== "" && Number(r.n_faces) > 0) badges.push(`<span class="badge mut">giống cụm chính ${Number(r.best_sim).toFixed(2)}</span>`);
+    const img = r.local_image || r.image_url;
+    const prob = problems(r);
+    const identBtns = IDENT.map(([k, t]) => `<button class="btn ${l.identity === k ? "on" : ""}" data-act="ident" data-v="${k}" ${unres ? "disabled" : ""}>${t}</button>`).join("");
+    const chips = REASONS.map(([k, t], i) => `<button class="chip ${(l.reasons || []).includes(k) ? "on" : ""}" data-act="reason" data-v="${k}" ${unres ? "disabled" : ""} title="phím ${i + 1}">${i + 1}·${t}</button>`).join("");
+    return `<div class="card ${l.flag || ""} ${isSuggest(r) ? "suggest" : ""} ${idx === state.focus ? "focus" : ""}" data-line="${r.line_no}" data-idx="${idx}">
+      <div class="thumb" data-act="zoom"><img loading="lazy" src="${esc(img)}" alt="${esc(r.description)}" referrerpolicy="no-referrer"
+        onerror="if(this.dataset.f!=='1'){this.dataset.f='1';this.src=${esc(JSON.stringify(r.image_url))};}"></div>
+      <div class="body">
+        <div class="desc">${nc.html || "<i>(không có tiêu đề)</i>"}</div>
+        <div class="facts">
+          <span>dòng ${r.line_no}</span><span>${esc(r.width)}×${esc(r.height)}</span>
+          <span>${esc(r.face_count)} mặt</span><span>mặt ${esc(r.face_area_pct)}%</span>
+          <a href="${esc(r.source_url)}" target="_blank" rel="noopener noreferrer">${esc(r.source_domain)}</a>
+        </div>
+        <div class="badges">${badges.join("")}</div>
+        <div class="ident"><span class="small">Người chính:</span>${identBtns}</div>
+        <div class="decide">
+          <button class="btn ok ${l.flag === "approved" ? "on" : ""}" data-act="approve" ${unres || l.identity === "other" || l.identity === "unsure" ? "disabled" : ""}>Approved (A)</button>
+          <button class="btn bad ${l.flag === "rejected" ? "on" : ""}" data-act="reject" ${unres ? "disabled" : ""}>Rejected (R)</button>
+        </div>
+        <div class="reasons">${chips}</div>
+        <input class="note" data-act="note" placeholder="Ghi chú (khi phân vân)" value="${esc(getLabel(r).note || "")}">
+        <div class="warn-line">${prob && prob !== "chưa gán nhãn" ? esc(prob) : ""}</div>
+      </div></div>`;
+  }
+
+  function renderGrid() {
+    const rows = visRows(state.current);
+    if (state.focus >= rows.length) state.focus = 0;
+    $("grid").innerHTML = rows.map(card).join("");
+  }
+
+  function render() { renderSide(); renderHead(); renderGrid(); }
+
+  function refreshCard(r) {
+    const rows = visRows(state.current);
+    const idx = rows.indexOf(r);
+    const el = document.querySelector(`.card[data-line="${r.line_no}"]`);
+    if (!el) return render();
+    const tmp = document.createElement("div");
+    tmp.innerHTML = card(r, idx);
+    el.replaceWith(tmp.firstElementChild);
+    renderSide(); renderHead();
+  }
+
+  // ---------- events ----------
+  $("entList").addEventListener("click", e => {
+    const li = e.target.closest("li"); if (!li || !li.dataset.slug) return;
+    state.current = li.dataset.slug; state.focus = 0; save(); render(); window.scrollTo(0, 0);
+  });
+  $("labeler").addEventListener("input", e => { state.labeler = e.target.value.trim(); save(); });
+
+  $("grid").addEventListener("click", e => {
+    const c = e.target.closest(".card"); if (!c) return;
+    const r = visRows(state.current)[+c.dataset.idx];
+    const actEl = e.target.closest("[data-act]");
+    const act = actEl && actEl.dataset.act;
+    const prevFocus = state.focus;
+    state.focus = +c.dataset.idx;
+    if (act === "zoom") return openZoom(r);
+    if (act === "approve") approve(r);
+    else if (act === "reject") reject(r);
+    else if (act === "reason") toggleReason(r, actEl.dataset.v);
+    else if (act === "ident") setIdentity(r, actEl.dataset.v);
+    else if (act === "note") { if (prevFocus !== state.focus) highlightFocus(); return; }
+    else { highlightFocus(); return; }
+    refreshCard(r); highlightFocus();
+  });
+  $("grid").addEventListener("input", e => {
+    if (e.target.dataset.act !== "note") return;
+    const c = e.target.closest(".card");
+    const r = visRows(state.current)[+c.dataset.idx];
+    const l = Object.assign({ reasons: [] }, getLabel(r), { note: e.target.value });
+    state.labels[r.line_no] = l; save();
+  });
+
+  function highlightFocus() {
+    document.querySelectorAll(".card").forEach(el => el.classList.toggle("focus", +el.dataset.idx === state.focus));
+    save();
+  }
+
+  function openZoom(r) {
+    $("zoomImg").src = r.local_image || r.image_url;
+    $("zoomCap").innerHTML = `${esc(r.description)}<br><a href="${esc(r.source_url)}" target="_blank" rel="noopener noreferrer">${esc(r.source_url)}</a>`;
+    $("zoom").classList.add("open");
+  }
+  $("zoom").addEventListener("click", e => { if (e.target.tagName !== "A") $("zoom").classList.remove("open"); });
+  $("guide").addEventListener("click", e => { if (e.target.id === "guide") $("guide").classList.remove("open"); });
+
+  document.addEventListener("keydown", e => {
+    if (e.target.matches("input, textarea")) { if (e.key === "Escape") e.target.blur(); return; }
+    if (e.key === "Escape") { $("zoom").classList.remove("open"); $("guide").classList.remove("open"); return; }
+    const rows = visRows(state.current);
+    const r = rows[state.focus];
+    const k = e.key.toLowerCase();
+    const move = d => { state.focus = Math.max(0, Math.min(rows.length - 1, state.focus + d)); highlightFocus();
+      const el = document.querySelector(`.card[data-idx="${state.focus}"]`); if (el) el.scrollIntoView({ block: "nearest", behavior: "smooth" }); };
+    if (k === "arrowright" || k === "j") { move(1); e.preventDefault(); }
+    else if (k === "arrowleft" || k === "k") { move(-1); e.preventDefault(); }
+    else if (k === "a") { approve(r); refreshCard(r); move(1); }
+    else if (k === "r") { reject(r); refreshCard(r); }
+    else if (/^[1-8]$/.test(k)) { toggleReason(r, REASONS[+k - 1][0]); refreshCard(r); }
+    else if (k === "m") { setIdentity(r, "match"); refreshCard(r); }
+    else if (k === "o") { setIdentity(r, "other"); refreshCard(r); }
+    else if (k === "u") { setIdentity(r, "unsure"); refreshCard(r); }
+    else if (k === "enter" || k === "z") { openZoom(r); }
+    else if (k === "n") { const i = entities.indexOf(state.current); if (i < entities.length - 1) { state.current = entities[i + 1]; state.focus = 0; save(); render(); window.scrollTo(0, 0); } }
+    else if (k === "p") { const i = entities.indexOf(state.current); if (i > 0) { state.current = entities[i - 1]; state.focus = 0; save(); render(); window.scrollTo(0, 0); } }
+  });
+
+  // ---------- export / import ----------
+  const COLS = ["line_no", "entity_id", "slug", "canonical_name", "sha256", "image_url", "flag", "reasons", "identity", "note", "labeler", "labeled_at", "review_source", "auto_flag", "rules", "audit"];
+  function csvCell(v) { v = String(v == null ? "" : v); return /[",\n\r]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v; }
+
+  $("exportBtn").onclick = () => {
+    if (!state.labeler) { toast("Nhập tên người gán nhãn trước khi xuất"); $("labeler").focus(); return; }
+    const issues = DATA.filter(r => problems(r));
+    if (issues.length && !confirm(`Còn ${issues.length} ảnh chưa xong hoặc thiếu lý do (vd dòng ${issues.slice(0, 5).map(r => r.line_no).join(", ")}). Vẫn xuất?`)) return;
+    const lines = [COLS.join(",")];
+    DATA.forEach(r => {
+      const l = effective(r);
+      const raw = getLabel(r);
+      lines.push([r.line_no, r.entity_id, r.slug, r.canonical_name, r.sha256, r.image_url, l.flag || "", (l.reasons || []).join(";"), l.identity || "", l.note || "", state.labeler, raw.ts || "", source(r), r.auto_flag || "", r.rules || "", r.audit || ""].map(csvCell).join(","));
+    });
+    const blob = new Blob(["﻿" + lines.join("\r\n")], { type: "text/csv;charset=utf-8" });
+    const a = document.createElement("a");
+    const day = new Date().toISOString().slice(0, 10);
+    a.href = URL.createObjectURL(blob);
+    a.download = `${CONFIG.filePrefix || "golden-labels"}-${state.labeler.replace(/[^\p{L}\p{N}_-]+/gu, "_")}-${day}.csv`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+
+  function parseCSV(text) {
+    const rows = []; let row = [], cell = "", q = false;
+    text = text.replace(/^﻿/, "");
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) {
+        if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; }
+        else cell += c;
+      } else if (c === '"') q = true;
+      else if (c === ",") { row.push(cell); cell = ""; }
+      else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(cell); rows.push(row); row = []; cell = ""; }
+      else cell += c;
+    }
+    if (cell !== "" || row.length) { row.push(cell); rows.push(row); }
+    return rows;
+  }
+
+  $("importBtn").onclick = () => $("importFile").click();
+  $("importFile").onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    const rows = parseCSV(await f.text());
+    const head = rows.shift() || [];
+    const ix = Object.fromEntries(head.map((h, i) => [h.trim(), i]));
+    if (ix.line_no == null || ix.flag == null) { toast("File không đúng định dạng xuất của tool"); return; }
+    const valid = new Set(DATA.map(r => String(r.line_no)));
+    let n = 0;
+    const unresCount = {};
+    rows.forEach(c => {
+      const line = c[ix.line_no]; if (!valid.has(line) || !c[ix.flag]) return;
+      const reasons = (c[ix.reasons] || "").split(";").filter(Boolean);
+      const slug = c[ix.slug];
+      if (reasons.includes("unresolved")) { unresCount[slug] = (unresCount[slug] || 0) + 1; return; }
+      state.labels[line] = { flag: c[ix.flag], reasons, identity: c[ix.identity] || "", note: c[ix.note] || "", ts: c[ix.labeled_at] || "" };
+      n++;
+    });
+    Object.keys(unresCount).forEach(s => { if (byEntity[s] && unresCount[s] === byEntity[s].length) state.unresolved[s] = true; });
+    save(); render(); toast(`Đã nhập ${n} nhãn`);
+    e.target.value = "";
+  };
+
+  // ---------- guide ----------
+  $("guideBody").innerHTML = `
+    <h3>Tóm tắt hướng dẫn</h3>
+    <p><b>Không chắc → rejected.</b> Đầy đủ: <code>golden-guideline.md</code>.</p>
+    <table>
+      <tr><td>1</td><td><b>wrong_person</b>: không phải entity, hoặc không chắc. Chọn <i>Người khác</i> / <i>Không chắc</i> sẽ tự rejected.</td></tr>
+      <tr><td>2</td><td><b>name_mismatch</b>: tiêu đề nói người khác (tên khác, <b>khác dấu</b>, "con trai của…"). Tiêu đề không nhắc tên thì không tính.</td></tr>
+      <tr><td>3</td><td><b>no_person</b>: không có người thật, ảnh lỗi.</td></tr>
+      <tr><td>4</td><td><b>sensitive</b>: lộ vùng nhạy cảm · bạo lực · <b>chính ảnh</b> có cảnh bắt giữ/còng tay/tòa án · sự kiện chính trị nhạy cảm.</td></tr>
+      <tr><td>5</td><td><b>not_clear</b>: mờ, tối, cháy sáng.</td></tr>
+      <tr><td>6</td><td><b>too_small</b>: phải phóng to mới nhận ra nét mặt.</td></tr>
+      <tr><td>7</td><td><b>not_prominent</b>: ảnh nhiều người mà entity không nổi bật. Nhóm nhạc: thiếu phần lớn thành viên.</td></tr>
+      <tr><td>8</td><td><b>hard_to_identify</b>: che nhiều, đồ che kín, ảnh ghép, ảnh AI, chỉnh sửa/hiệu ứng/nhiễu nặng.</td></tr>
+    </table>
+    <p>Nhân vật lịch sử: tranh, tượng, ảnh cũ được approved. Ảnh trùng: gán bình thường.</p>
+    <h3>Phím tắt</h3>
+    <p><kbd>←</kbd>/<kbd>→</kbd> hoặc <kbd>K</kbd>/<kbd>J</kbd> chuyển ảnh · <kbd>A</kbd> approved (và sang ảnh sau) · <kbd>R</kbd> rejected ·
+    <kbd>1</kbd>–<kbd>8</kbd> bật/tắt lý do · <kbd>M</kbd> đúng người · <kbd>O</kbd> người khác · <kbd>U</kbd> không chắc ·
+    <kbd>Z</kbd>/<kbd>Enter</kbd> phóng to · <kbd>N</kbd>/<kbd>P</kbd> entity sau/trước · <kbd>Esc</kbd> đóng</p>`;
+  $("guideBtn").onclick = () => $("guide").classList.add("open");
+  $("themeBtn").onclick = () => {
+    const root = document.documentElement;
+    const dark = root.dataset.theme ? root.dataset.theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    root.dataset.theme = dark ? "light" : "dark";
+    try { localStorage.setItem(STORE_KEY + "-theme", root.dataset.theme); } catch (e) {}
+  };
+  try { const t = localStorage.getItem(STORE_KEY + "-theme"); if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+
+  if (!DATA.length) { $("entHead").innerHTML = "<h2>Chưa có dữ liệu</h2><p>Chạy <code>python tools/build_golden.py</code> trước.</p>"; return; }
+  render();
+})();
+</script>
+</body>
+</html>

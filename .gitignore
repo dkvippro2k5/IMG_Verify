@@ -1,0 +1,28 @@
+# môi trường / IDE
+.venv/
+.vscode/
+__pycache__/
+*.pyc
+
+# model (~600 MB, tải riêng theo README)
+**/models/
+
+# dữ liệu gốc của mentor, ảnh tải về, đặc trưng cache, sản phẩm sinh ra
+**/images/
+**/features/
+**/batches/
+**/data/*
+!**/data/.gitkeep
+**/*.f32
+**/*.npy
+**/*.log
+people/golden/data.js
+people/golden/golden-labels-DuongVanKien-*
+people/scope*/
+people/review-*/
+approved-results*.csv
+scope-labels-*.csv
+gallery.html
+
+# nhãn đã gán: không đưa lên (mỗi người giữ file của mình)
+*-flagged.csv
