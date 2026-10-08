@@ -1,7 +1,7 @@
 # Kế hoạch: gắn cờ approved / rejected cho ảnh entity người
 
 > Cập nhật: 2026-10-08 (đợt 2 — dữ liệu `approved-results (3).csv`, 3 người cùng làm)
-> Liên quan: [golden-guideline.md](golden-guideline.md) · [report-entities-for-mentor.md](report-entities-for-mentor.md) · [report.md](report.md)
+> Liên quan: [golden-guideline.md](golden-guideline.md) · [report.md](report.md)
 >
 > Tài liệu này dùng chung cho cả nhóm. Phần [§8 Cấu hình máy](#8-cấu-hình-máy-mỗi-người-tự-điền) mỗi người tự điền.
 
@@ -44,7 +44,7 @@ Cột `cluster` của mentor (`ambiguous` = chưa xác định được cụm, 2
 
 Lý do có ngưỡng này: đợt 1 (`approved-results (1).csv`) tỉ lệ rejected là **36,3%** (2.422/6.664) — rất cao, phần lớn do entity sai người hoặc trùng tên. Dữ liệu đợt 2 kỳ vọng đã được mentor lọc kỹ hơn nên nếu vẫn vượt 5% thì **khả năng cao là lỗi dữ liệu nguồn, không phải việc của người duyệt** → báo sớm để mentor xử lý thay vì duyệt tay hết.
 
-Khi escalate, gửi kèm: số đợt, khoảng bản ghi, tỉ lệ rejected, phân bố `reject_reason`, và danh sách entity sai nhiều nhất (mẫu báo cáo: [report-entities-for-mentor.md](report-entities-for-mentor.md)).
+Khi escalate, gửi kèm: số đợt, khoảng bản ghi, tỉ lệ rejected, phân bố `reject_reason`, và danh sách entity sai nhiều nhất.
 
 ## 3. Kiến trúc
 
@@ -226,7 +226,7 @@ Nhạy cảm loại sự kiện (bắt giữ, tòa án, biểu tình, bạo lự
 
 ### G5 — Merge và báo cáo
 - Merge nhãn vào bản sao file gốc với 2 cột `flag` + `reject_reason` (§4), nối bằng `entity_id + sha256`.
-- Báo cáo: tỉ lệ tự động, precision ước lượng từ mẫu kiểm tra, phân bố `reject_reason`, danh sách entity có vấn đề (theo mẫu [report-entities-for-mentor.md](report-entities-for-mentor.md)).
+- Báo cáo: tỉ lệ tự động, precision ước lượng từ mẫu kiểm tra, phân bố `reject_reason`, danh sách entity có vấn đề.
 
 ## 8. Cấu hình máy (mỗi người tự điền)
 

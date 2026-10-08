@@ -12,7 +12,6 @@ Mỗi ảnh nhận 2 cột: `flag` (`approved` / `rejected`) và `reject_reason`
 | [people/docs/pipeline-spec.md](people/docs/pipeline-spec.md) | **Đặc tả model, tham số, rule, output format** — 3 người phải giống nhau |
 | [people/docs/golden-guideline.md](people/docs/golden-guideline.md) | Tiêu chí duyệt ảnh |
 | [people/docs/golden-entities.md](people/docs/golden-entities.md) | Danh sách entity golden đợt 1 |
-| [people/docs/report-entities-for-mentor.md](people/docs/report-entities-for-mentor.md) | Mẫu báo cáo entity có vấn đề gửi mentor |
 | [people/docs/report.md](people/docs/report.md) | Nghiên cứu ban đầu (model, dataset) |
 
 ## Cấu trúc
